@@ -1,0 +1,1 @@
+Daily returns on IBM and Coca Cola from January 1990 to December 1999, from A. Patton's copula toolbox for Matlab
