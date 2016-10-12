@@ -26,3 +26,4 @@ function dens = duvt_garch(x, mu, Sigma, df, GamMat)
     tmp = (x-mu)*(x-mu)/Sigma;
    
     dens = c*(1+tmp/df)^e;
+end

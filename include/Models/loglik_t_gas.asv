@@ -1,4 +1,4 @@
-function [LL, f, sigma2] = loglik_t_gas(theta, y, link, scale, GamMat)
+function [d, f, sigma2] = loglik_t_gas(theta, y, link, scale, GamMat)
     % theta is Nx5, matrix of draws
     [N ,~] = size(theta);
     mu = theta(:,1);
@@ -29,8 +29,7 @@ function [LL, f, sigma2] = loglik_t_gas(theta, y, link, scale, GamMat)
     T = size(y,1);
      
     d = -Inf*ones(N,1);
-    LL = -Inf*ones(N,1);
-
+    LL =    
     for ii = 1:N
         if mod(ii,1000) == 0
             fprintf('loglik ii = %d\n',ii);
@@ -66,12 +65,11 @@ function [LL, f, sigma2] = loglik_t_gas(theta, y, link, scale, GamMat)
 % %                 pdf(jj,1) = dmvt(y(jj,1), mu(ii,1), rho(ii,1)*f(jj,1), nu(ii,1), GamMat);
             pdf(jj,1) = duvt_garch(y(jj,1), mu(ii,1), rho(ii,1)*sigma2(jj,1), nu(ii,1), GamMat);
             pdf(jj,1) = log(pdf(jj,1));
-            y2 = ((y(jj,1)-mu(ii,1)).^2)./((nu(ii,1)-2)*sigma2(jj,1));
-            L(jj,1) = log(gamma((nu(ii,1)+1)/2))-log(gamma(nu(ii,1)/2))-0.5*log(nu(ii,1)-2)- 0.5*log(pi) ...
-                - 0.5*log(sigma2(jj,1))-((nu(ii,1)+1)/2)*log(1+y2);
+%             y2 = ((y(jj,1)-mu(ii,1)).^2)./((nu(ii,1)-2)*sigma2(jj,1));
+%             L(jj,1) = log(gamma((nu(ii,1)+1)/2))-log(gamma(nu(ii,1)/2))-0.5*log(nu(ii,1)-2)- 0.5*log(pi) ...
+%                 - 0.5*log(sigma2(jj,1))-((nu(ii,1)+1)/2)*log(1+y2);
         end
         d(ii,1) = -sum(pdf)/T;
-        LL(ii,1) = -sum(L)/T;
-        fprintf('d(%i,1) = %8.6f, LL(%i,1) = %8.6f, DIFF = %8.6f\n', ii, d(ii,1), ii, LL(ii,1), d(ii,1)-LL(ii,1));
+%         L = -sum(L)/T;
     end
 end 

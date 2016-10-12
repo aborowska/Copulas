@@ -18,51 +18,55 @@ ibm = y(:,1);
 ccola = y(:,2);
 
 model = 't_gas';
-% hyper = 0.01;
+
+hyper = 0.01; % for posterior: prior hyperparameter for nu, i.e. df 
 
 %% ibm
-link = 0; % 1 - linear link; 0 - exp link
+link =  0; % 1 - linear link; 0 - exp link
 scale = 0; % 1 - inv fisher; 0 - sqrt inv fisher
 % Note: (1,1) was discussed in the original GAS paper (Creal et al. 2013)
 % Note: (0,0) cancels out so the updating step has a constant unit variance
 % and is invariant under any nondegenerate parameter transformation 
-% kernel_init = @(xx) loglik_t_gas(xx, ibm, link, scale, GamMat);
+
 % theta = [mu, omega, A, B, nu] 
-% theta_init = [0.07, 0.02, 0.1, 0.98, 15];
+theta_init = [0.07, 0.01, 0.1, 0.98, 15]; 
+d = size(theta_init,2);
+  
 % kernel_init = @(xx) posterior_t_gas_hyper_init_mex(xx, ibm, hyper, GamMat);
 % [theta_init_ibm, Sigma_ibm] = fn_initopt(kernel_init, theta_init);
+[lnk, f_ibm] = posterior_gen_gas_mex(theta_init, ibm, hyper, link, scale, GamMat);
 
 
-% theta = [mu, omega, A, B, nu] 
-theta_init = [0.07, 0.02, 0.1, 0.98, 15];
-
+% Real MLE
 fn_trans_param = @(xx,mm) transform_param_gas(xx, mm, link);
-theta_init_trans = fn_trans_param(theta_init, 'opt');
-theta_init_trans_back = fn_trans_param(theta_init_trans,'back');
-
-loglik_t_gas(theta_init, ibm, link, scale, GamMat)
-
-kernel_init = @(xx) loglik_t_gas(fn_trans_param(xx,'back'), ibm, link, scale, GamMat);
-kernel_init(theta_init_trans)
-
+kernel_init = @(xx) loglik_gen_gas(fn_trans_param(xx,'back'), ibm, link, scale, GamMat); 
 % kernel_init = @(xx) loglik_t_gas_hyper_init_mex(transform_param_gas(xx,'back'), ibm, hyper, GamMat);
-options = optimset('display','iter','TolFun',1e-5,'LargeScale','off','TolX',1e-5,'HessUpdate','bfgs','FinDiffType','central',...
-     'maxiter',5000,'MaxFunEvals',5000);
-fn_trans_param = @(xx,mm) transform_param_gas(xx,mm,link);
+options = optimset('display','off','TolFun',1e-5,'LargeScale','off','TolX',1e-5,'HessUpdate','bfgs','FinDiffType','central',...
+     'maxiter',5000,'MaxFunEvals',5000); %display iter
 fn_jacobian = @(xx) jacobian_gas(xx, link);
-[mu_ibm, ~, Hessian, signal_smooth] = estimate(kernel_init, theta_init, fn_trans_param, fn_jacobian, options);
+[theta_ibm, ~, Hessian, signal_smooth] = estimate(kernel_init, theta_init, fn_trans_param, fn_jacobian, options);
 Sigma_ibm = inv(T*Hessian);
 
+mit_ibm = struct('mu',theta_ibm,'Sigma',reshape(Sigma_ibm,1,d^2),'p',1,'df',5);
+% kernel = @(xx) posterior_t_gas_hyper_mex(xx, ibm, hyper, GamMat);
+kernel = @(xx) posterior_gen_gas_mex(xx, ibm, hyper, link, scale, GamMat);
+[theta_ibm, accept_ibm] = Mit_MH(M+BurnIn, kernel, mit_ibm, GamMat);
+theta_ibm = theta_ibm(BurnIn+1:M+BurnIn,:);
+% accept_ibm = 0.503181818181818
+
+
+%% DEBUGGING
 % PARAM = mu_init(2:5);
 % ibm_kls = ibm'-mean(ibm);
 PARAM = theta_init;
 ibm_kls = ibm';
 [PARAM,f,theta]=estimate_vol_t_gas(ibm_kls,PARAM);
 
-mit_ibm = struct('mu',mu_ibm,'Sigma',Sigma_ibm,'p',1,'df',10);
-kernel = @(xx) posterior_t_gas_hyper_mex(xx, ibm, hyper, GamMat);
-[theta_ibm, accept_ibm] = Mit_MH(M+BurnIn, kernel, mit_ibm, GamMat);
-theta_ibm = theta_ibm(BurnIn+1:M+BurnIn,:);
+[LL1, f1] = loglik_t_gas(PARAM, ibm, link, scale, GamMat);
+[LL2, f2] = loglik_gen_gas(PARAM, ibm, link, scale, GamMat);
+[LL3, f3] = posterior_gen_gas_mex(PARAM, ibm, hyper, link, scale, GamMat);
+
+
 
 %% ccola
 kernel_init = @(xx) posterior_t_gas_hyper_init_mex(xx, ccola, hyper, GamMat);
