@@ -2,8 +2,8 @@
 #include "math.h"
 #include "matrix.h"
 
-#define  PI     3.1415926535897932;
-#define Log2PI  1.837877066409345;
+#define  PI     3.1415926535897932
+#define Log2PI  1.837877066409345
 /******************************************************************* */
 
 void duvt_garch(double x, double mu, double sigma, double df, double *GamMat, mwSignedIndex G, double *pdf)
