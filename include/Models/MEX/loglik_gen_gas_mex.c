@@ -7,19 +7,15 @@
 #define LogPI   1.14472988584940017414
 /*******************************************************************  */
 
-void my_gamma(double *gam1, double *gam2, mwSignedIndex N)
+void my_gamma(double *gam, mwSignedIndex N)
 {
     mxArray *in_array_ptr, *out_array_ptr; // mxArray * - a pointer to a struct (A POINTER TO A POINTER??)
    
-    in_array_ptr = mxCreateDoubleMatrix(N, 1, mxREAL);  
+    in_array_ptr = mxCreateDoubleMatrix(2*N, 1, mxREAL);  
     
-    memcpy(mxGetPr(in_array_ptr), gam1, N*1*sizeof(double)); // start copying at the double returned by mxGetPr(array_ptr)
+    memcpy(mxGetPr(in_array_ptr), gam, 2*N*sizeof(double)); // start copying at the double returned by mxGetPr(array_ptr)
     mexCallMATLAB(1, &out_array_ptr, 1, &in_array_ptr, "gamma"); // & turns a value into a pointer --> call a MATLAB function with pointer to real matrices
-    memcpy(gam1, mxGetPr(out_array_ptr), N*1*sizeof(double)); // start copying at the double returned by d=mxGetPr(plhs[0])
- 
-    memcpy(mxGetPr(in_array_ptr), gam2, N*1*sizeof(double)); // start copying at the double returned by mxGetPr(array_ptr)
-    mexCallMATLAB(1, &out_array_ptr, 1, &in_array_ptr, "gamma"); // & turns a value into a pointer --> call a MATLAB function with pointer to real matrices
-    memcpy(gam2, mxGetPr(out_array_ptr), N*1*sizeof(double)); // start copying at the double returned by d=mxGetPr(plhs[0])
+    memcpy(gam, mxGetPr(out_array_ptr), 2*N*sizeof(double)); // start copying at the double returned by d=mxGetPr(plhs[0])
  
     mxDestroyArray(in_array_ptr);
     mxDestroyArray(out_array_ptr);
@@ -31,7 +27,7 @@ void loglik_gen_gas_mex(double *y, mwSignedIndex N, mwSignedIndex k, mwSignedInd
         double *d, double *f)
 {
  
-    double *nu_con, *gam1, *gam2;
+    double *nu_con, *gam, *gam2;
     double y2, sigma2, pdf; 
     double tmp, S, scaled_score;
     mwSignedIndex i, j;
@@ -40,8 +36,7 @@ void loglik_gen_gas_mex(double *y, mwSignedIndex N, mwSignedIndex k, mwSignedInd
     if (k == 5)
     {
         nu_con = mxMalloc((N)*sizeof(double));
-        gam1 = mxMalloc((N)*sizeof(double));
-        gam2 = mxMalloc((N)*sizeof(double));
+        gam = mxMalloc(2*(N)*sizeof(double));
     }
     
     /* Initialise */
@@ -49,11 +44,11 @@ void loglik_gen_gas_mex(double *y, mwSignedIndex N, mwSignedIndex k, mwSignedInd
     {
         for (i=0; i<N; i++)
         {
-            gam1[i] = (theta[i+4*N]+1)/2;
-            gam2[i] = theta[i+4*N]/2;            
+            gam[2*i] = (theta[i+4*N]+1)/2;
+            gam[2*i+1] = theta[i+4*N]/2;            
             nu_con[i] = 2*(theta[i+4*N]+3)/theta[i+4*N];
         }
-        my_gamma(gam1, gam2, N);
+        my_gamma(gam,N);
     }
     
     /* Get the constants for Student's distribution */
@@ -76,8 +71,8 @@ void loglik_gen_gas_mex(double *y, mwSignedIndex N, mwSignedIndex k, mwSignedInd
         if (k == 5)
         {
             y2 = y2/(theta[i+4*N] - 2);
-            pdf = pdf + log(gam1[i]);           
-            pdf = pdf - log(gam2[i]);          
+            pdf = pdf + log(gam[2*i]);           
+            pdf = pdf - log(gam[2*i+1]);          
         }
         else
         {
@@ -139,8 +134,8 @@ void loglik_gen_gas_mex(double *y, mwSignedIndex N, mwSignedIndex k, mwSignedInd
 //                     mexPrintf("student\n");
                 y2 = y2/(theta[i+4*N] - 2);
                 pdf = - 0.5*(log(theta[i+4*N]-2) + log(PI) + log(sigma2) + (theta[i+4*N]+1)*log(1+y2));
-                pdf = pdf + log(gam1[i]);           
-                pdf = pdf - log(gam2[i]); 
+                pdf = pdf + log(gam[2*i]);           
+                pdf = pdf - log(gam[2*i+1]); 
             }
             else
             {
@@ -156,8 +151,7 @@ void loglik_gen_gas_mex(double *y, mwSignedIndex N, mwSignedIndex k, mwSignedInd
     if (k == 5)
     {    
         mxFree(nu_con); 
-        mxFree(gam1); 
-        mxFree(gam2);
+        mxFree(gam); 
     }
 }
 

@@ -122,8 +122,8 @@ GasVolaUnivMain
 %% ccola
 kernel_init = @(xx) loglik_gen_gas_mex(fn_trans_param(xx,'back'), ccola, link, scale); 
 mu_init = [0.07, 0.01, 0.1, 0.98, 15]; 
-mu_init = [0.07, 0.02, 0.1, 0.98, 5];
-mu_init= [ 0.0524    0.0892    0.0550    0.9751    4.8330];
+% mu_init = [0.07, 0.02, 0.1, 0.98, 5];
+% mu_init= [ 0.0524    0.0892    0.0550    0.9751    4.8330];
 tic
 [mu_ccola, ~, Hessian, signal_ccola] = estimate(kernel_init, mu_init, fn_trans_param, fn_jacobian, options);
 toc
@@ -136,11 +136,11 @@ theta_ccola = theta_ccola(BurnIn+1:M+BurnIn,:);
 %  accept_ccola = 0.
 
 %% statistics 
-mean(theta_ccola)
-mean(theta_ibm)
+% mean(theta_ccola)
+% mean(theta_ibm)
 
-[LL_ibm, f_ibm] = loglik_gen_gas_mex(mu_ibm, ibm, link, scale);
-[LL_ccola, f_ccola] = loglik_gen_gas_mex(mu_ccola, ccola, link, scale);
+[~, f_ibm] = loglik_gen_gas_mex(mu_ibm, ibm, link, scale);
+[~, f_ccola] = loglik_gen_gas_mex(mu_ccola, ccola, link, scale);
 
 hold on 
 % plot(ibm',':c')
@@ -148,16 +148,22 @@ hold on
 plot(f_ibm,'b')
 plot(f_ccola,'r')
 hold off
-    
-u_ibm = (ibm'-mu_ibm(1,1))./sqrt(fn_link(f_ibm)*(mu_ibm(1,5)-2)/mu_ibm(1,5));
-u_ccola = (ccola'-mu_ccola(1,1))./sqrt(fn_link(f_ccola)*(mu_ccola(1,5)-2)/mu_ccola(1,5));
-hold on  
-plot(u_ibm,'b')
-plot(u_ccola,'r')
-hold off
-%% 
+  
 
-%% Crisis SnP500 data (old project)
+save('Results/ibm_ccola_results.mat', 'link', 'scale', 'mu_ibm', 'mu_ccola',...
+    'Sigma_ibm', 'Sigma_ccola', 'f_ibm', 'f_ccola');
+
+
+
+
+
+
+
+
+
+
+
+%% Crisis SnP500 data (PMitISEM project)
 snp = csvread('GSPC_ret_updated.csv'); 
 snp = snp*100;
             mu_init = [0.07, 0.02, 0.1, 0.98, 6.9];
@@ -166,23 +172,19 @@ snp = snp*100;
             [mu, Sigma] = fn_initopt(kernel_init, mu_init);           
             mit_direct = struct('mu',mu,'Sigma',Sigma,'p',1,'df',cont_direct.mit.dfnc);
             time_direct(1,1) = toc;   
-
 link = 1;
 scale = 1;
-theta_init = [0.07, 0.01, 0.1, 0.98, 15]; 
-d = size(theta_init,2);
-
-% kernel_init = @(xx) posterior_t_gas_hyper_init_mex(xx, ibm, hyper, GamMat);
-% [theta_init_ibm, Sigma_ibm] = fn_initopt(kernel_init, theta_init);
-[lnk, f_ibm] = posterior_gen_gas_mex(theta_init, snp, hyper, link, scale, GamMat);
+mu_init = [0.07, 0.01, 0.1, 0.98, 15]; 
+d = size(mu_init,2);
+ 
+[lnk_snp, f_snp] = posterior_gen_gas_mex(mu_init, snp, hyper, link, scale, GamMat);
 
 % Real MLE
 fn_trans_param = @(xx,mm) transform_param_gas(xx, mm, link);
-kernel_init = @(xx) loglik_gen_gas(fn_trans_param(xx,'back'), snp, link, scale, GamMat); 
-% kernel_init = @(xx) loglik_t_gas_hyper_init_mex(transform_param_gas(xx,'back'), ibm, hyper, GamMat);
+kernel_init = @(xx) loglik_gen_gas_mex(fn_trans_param(xx,'back'), snp, link, scale); 
+ % kernel_init = @(xx) loglik_t_gas_hyper_init_mex(transform_param_gas(xx,'back'), ibm, hyper, GamMat);
 options = optimset('display','off','TolFun',1e-5,'LargeScale','off','TolX',1e-5,'HessUpdate','bfgs','FinDiffType','central',...
      'maxiter',5000,'MaxFunEvals',5000); %display iter
 fn_jacobian = @(xx) jacobian_gas(xx, link);
-[theta_ibm, ~, Hessian, signal_smooth] = estimate(kernel_init, theta_init, fn_trans_param, fn_jacobian, options);
-Sigma_ibm = inv(T*Hessian);
-
+[mu_snp, ~, Hessian, signal_snp] = estimate(kernel_init, mu_init, fn_trans_param, fn_jacobian, options);
+Sigma_snp = inv(T*Hessian);
