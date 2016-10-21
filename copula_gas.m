@@ -9,6 +9,8 @@ ccola = y(:,2);
 
 model = 't_gas';
 
+options = optimset('display','iter','TolFun',1e-5,'LargeScale','off','TolX',1e-5,'HessUpdate','bfgs','FinDiffType','central',...
+     'maxiter',5000,'MaxFunEvals',5000); %display iter
 plot_on = false;
 
 %% Given the estimation results for the marginals  
@@ -42,8 +44,8 @@ if plot_on
     hold off
 end
 u = [u_ibm; u_ccola]';
-theta = [0.02, 0.10, 0.98];       
-[f, rho] = volatility_copula_gas(theta, u);
+% theta = [0.02, 0.10, 0.98];       
+% [f, rho] = volatility_copula_gas(theta, u);
 
 if plot_on
     hold on  
@@ -59,22 +61,22 @@ end
 fn_trans_param = @(xx, mm) transform_param_gas_copula(xx, mm);
 fn_jacobian = @(xx) jacobian_gas_copula(xx);
 
-
 mu_init = [0.02, 0.10, 0.98];       
 kernel_init = @(xx) loglik_copula_gas(fn_trans_param(xx,'back'), u);
-options = optimset('display','iter','TolFun',1e-5,'LargeScale','off','TolX',1e-5,'HessUpdate','bfgs','FinDiffType','central',...
-     'maxiter',5000,'MaxFunEvals',5000); %display iter
 tic
 [mu_copula, ~, Hessian, signal_copula] = estimate(kernel_init, mu_init, fn_trans_param, fn_jacobian, options);
-toc
-Sigma_copula = inv(T*Hessian);
+toc %Elapsed time is 18.795089 seconds.
 
+Sigma_copula = inv(T*Hessian);
 [f_copula, rho_copula] = volatility_copula_gas(mu_copula, u);
 
+link = 1;  % 1: KLS link; 0: NAIS link;
+scale = 0; % 1 - inv fisher; 0 - sqrt inv fisher
 kernel_init = @(xx) loglik_gen_copula_gas_mex(fn_trans_param(xx,'back'), u, link, scale);
 tic
 [mu_copula_mex, ~, Hessian_mex, signal_copula_mex] = estimate(kernel_init, mu_init, fn_trans_param, fn_jacobian, options);
-toc
+toc %Elapsed time is 0.388792 seconds.
+
 
 if plot_on
     hold on  
@@ -85,15 +87,6 @@ if plot_on
     plot(rho*0,'k:')
     hold off
 end
-
-link = 1;  % 1: KLS link; 0: NAIS link;
-scale = 0; % 1 - inv fisher; 0 - sqrt inv fisher
-mu_init = [0.02, 0.10, 0.98];       
-kernel_init = @(xx) loglik_gen_copula_gas_mex(fn_trans_param(xx,'back'), u, link, scale);
-
-[LL1, f1, rho1] = loglik_copula_gas(mu_init, u);
-[LL2, f2, rho2] = loglik_gen_copula_gas_mex(mu_init, u, link, scale );
-
 
 
 %% Student's t Copula estimation

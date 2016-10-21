@@ -201,7 +201,7 @@ void loglik_gen_copula_gas_mex(double *y, mwSignedIndex N, mwSignedIndex k, mwSi
                 pdf = pdf + log(gam[3*i]);           
                 pdf = pdf + log(gam[3*i+1]); 
                 pdf = pdf - 2*log(gam[3*i+2]);         
-                mexPrintf("pdf[%i] = %10.8f\n",j,pdf);                                           
+//                 mexPrintf("pdf[%i] = %10.8f\n",j,pdf);                                           
             }
             else
             {
