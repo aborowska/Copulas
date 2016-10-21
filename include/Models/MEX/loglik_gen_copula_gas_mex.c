@@ -105,10 +105,10 @@ void loglik_gen_copula_gas_mex(double *y, mwSignedIndex N, mwSignedIndex k, mwSi
             rho[i] = (1 - exp(-f[i]))/(1 + exp(-f[i]));    
 //             mexPrintf("KLS link\n");
         }
-        else    /* NAIS link*/
+        else    /* HM link*/
         {
-            rho[i] = 1/(1 + exp(-f[i]));     
-//             mexPrintf("NAIS link\n");            
+            rho[i] = (exp(2*f[i])-1)/(exp(2*f[i])+1);        
+//             mexPrintf("HM link\n");            
         }
         
         if (k == 4)
@@ -164,8 +164,8 @@ void loglik_gen_copula_gas_mex(double *y, mwSignedIndex N, mwSignedIndex k, mwSi
             }
             else
             {
-//                 mexPrintf("NAIS link\n"); 
-                tmp = 1/(2 + exp(f[N*(j-1) + i]) + exp(-f[N*(j-1) + i]));                 
+//                 mexPrintf("HM link\n"); 
+                tmp = 4/(2 + exp(2*f[N*(j-1) + i]) + exp(-2*f[N*(j-1) + i]));                 
             }
             S = S/(tmp*tmp);    
             scaled_score = tmp*scaled_score;
@@ -184,10 +184,10 @@ void loglik_gen_copula_gas_mex(double *y, mwSignedIndex N, mwSignedIndex k, mwSi
 //                 mexPrintf("KLS link\n");                        
                 rho[N*j+ i] = (1 - exp(-f[N*j + i]))/(1 + exp(-f[N*j + i]));             
             }
-            else    /* NAIS link*/
+            else    /* HM link*/
             {
-//                 mexPrintf("NAIS link\n");                            
-                rho[N*j+ i] = 1/(1 + exp(-f[N*j + i]));                  
+//                 mexPrintf("HM link\n");                            
+                rho[N*j+ i] = (exp(2*f[N*j + i])-1)/(exp(2*f[N*j + i])+1);                 
             }
             
             if (k == 4)

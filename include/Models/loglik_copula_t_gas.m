@@ -2,6 +2,10 @@ function [LL, f, rho] = loglik_copula_t_gas(theta, y)
     [N,~] = size(theta);
     T = size(y, 1);
     
+    if (nargin == 2)
+        link = 1;
+    end
+        
     omega = theta(:,1);
     A = theta(:,2);
     B = theta(:,3);
@@ -9,7 +13,11 @@ function [LL, f, rho] = loglik_copula_t_gas(theta, y)
     
     f = zeros(N,T);  % alpha in the paper, time-varying parameter following GAS recursion
     f(:,1) = omega./(1-B); 
-    transf = @(aa) (1 - exp(-aa))./(1 + exp(-aa));
+    if link
+        transf = @(aa) (1 - exp(-aa))./(1 + exp(-aa));
+    else
+        transf = @(aa) (exp(2*aa)-1)./(exp(2*aa)+1);        
+    end
     rho = zeros(N,T); % the time-varying parameter tranfsormed by the trnasf function --> rho, i.e. the correlation
     rho(:,1) = transf(f(:,1));
     
