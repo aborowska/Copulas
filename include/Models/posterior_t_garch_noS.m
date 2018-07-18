@@ -1,5 +1,5 @@
 function d = posterior_t_garch_noS(theta, data, S, L, hyper, GamMat)
-    % theta is Nx4, matrix of draws
+    % theta is Nx5, matrix of draws
     [N ,~] = size(theta);
     omega = theta(:,1);
     alpha = theta(:,2);

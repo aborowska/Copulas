@@ -1,7 +1,7 @@
 addpath(genpath('include/'));
 addpath(genpath('KLS/'));
 
-model = 't_gas';
+model = 'copula_t_gas';
 
 options = optimset('display','iter','TolFun',1e-5,'LargeScale','off','TolX',1e-5,'HessUpdate','bfgs','FinDiffType','central',...
      'maxiter',5000,'MaxFunEvals',5000); %display iter
@@ -43,8 +43,8 @@ plot_on = false;
     end
     
     u = [u_ibm; u_ccola]';
-    % mu_init = [0.02, 0.10, 0.98];       
-    % [f, rho] = volatility_copula_gas(mu_init, u);
+    mu_init = [0.02, 0.10, 0.98];       
+    [f, rho] = volatility_copula_gas(mu_init, u);
 
     if plot_on
         hold on  
@@ -55,10 +55,16 @@ plot_on = false;
         hold off
     end
 
-
 %% SIMULATION
+mu_init = [0.02, 0.10, 0.98, 5];       
+mu_true = mu_init;
+T = 2500;
+N = 1;
+link = 1;
+[u, f, rho] = simulate_copula_ss(mu_true, T, N, link);
+%  [u, f, rho] = simulate_copula_gas(mu_true, T, N, link);
 
-
+ 
 %% Normal Copula estimation
 
 fn_trans_param = @(xx, mm) transform_param_gas_copula(xx, mm);
@@ -104,6 +110,8 @@ tic
 toc %Elapsed time is 7.022134 seconds.
 
 Sigma_copula_t = inv(T*Hessian);
+[~, f_copula_t, rho_copula_t] = loglik_copula_t_gas(mu_copula_t, u);
+
 
 link = 1; % 1: 2*(logsig-0.5) (KLS); 0: inv Fisher transform (Hafner & Manner 2012);
 scale = 0; % 1 - inv fisher; 0 - sqrt inv fisher
@@ -123,6 +131,9 @@ if plot_on
     hold off
 end
 
+%% Save
+save('Results/ibm_ccola_copula_gas_results.mat', 'link', 'scale', 'u', 'z_ibm', 'z_ccola', 'f_ibm', 'f_ccola', ...
+    'mu_copula', 'Sigma_copula', 'f_copula', 'rho_copula', 'mu_copula_t', 'Sigma_copula_t', 'f_copula_t', 'rho_copula_t');
 
 %% Different link functions:
 link = 0; % 1: 2*(logsig-0.5) (KLS); 0: inv Fisher transform (Hafner & Manner 2012);
